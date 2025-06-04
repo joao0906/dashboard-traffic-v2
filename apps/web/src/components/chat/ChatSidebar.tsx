@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { processUserChatMessage } from '@/app/actions/chatActions'
-import { Send, MessageCircle, Loader2 } from 'lucide-react'
+import { Send, MessageCircle, Loader2, Plus, Bot, User, Sparkles } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 
 // Criar cliente Supabase
@@ -165,6 +165,14 @@ export default function ChatSidebar({ currentClientId }: ChatSidebarProps) {
     }
   }
 
+  // Handle Enter key
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
+    }
+  }
+
   // Formatar data/hora
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('pt-BR', {
@@ -177,90 +185,141 @@ export default function ChatSidebar({ currentClientId }: ChatSidebarProps) {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px'
     }
   }, [newMessageContent])
 
   // Iniciar nova conversa
   const startNewConversation = () => {
     setCurrentSessionId(uuidv4())
+    setMessages([])
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 w-80">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 w-80">
       {/* Header do Chat */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              IA Assistant
-            </h3>
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-gray-800 dark:to-gray-800">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+                Assistente IA
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Marketing Digital
+              </p>
+            </div>
           </div>
           <button
             onClick={startNewConversation}
-            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title="Nova conversa"
           >
-            Nova conversa
+            <Plus className="h-4 w-4" />
           </button>
+        </div>
+        
+        {/* Status indicator */}
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Online</span>
         </div>
       </div>
 
       {/* Área de Mensagens */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
         {isLoadingHistory ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-sm text-gray-500">Carregando histórico...</span>
+            <div className="flex items-center space-x-2 text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Carregando conversa...</span>
+            </div>
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-8">
-            <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              Inicie uma conversa com o assistente de IA
+            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+            </div>
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+              Bem-vindo ao Chat IA!
+            </h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Faça perguntas sobre suas campanhas, ROAS, otimizações e muito mais.
             </p>
+            <div className="space-y-2">
+              <button
+                onClick={() => setNewMessageContent('Como está o desempenho das minhas campanhas?')}
+                className="block w-full text-left p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
+              >
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  📊 Como está o desempenho das minhas campanhas?
+                </span>
+              </button>
+              <button
+                onClick={() => setNewMessageContent('Como posso melhorar meu ROAS?')}
+                className="block w-full text-left p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
+              >
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  🎯 Como posso melhorar meu ROAS?
+                </span>
+              </button>
+            </div>
           </div>
         ) : (
           messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-3/4 rounded-lg p-3 ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : message.role === 'assistant'
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600'
-                    : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                <div className="text-sm whitespace-pre-wrap">
-                  {message.content}
-                </div>
-                <div
-                  className={`text-xs mt-1 ${
+            <div key={message.id} className="space-y-2">
+              <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`flex max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start space-x-2`}>
+                  {/* Avatar */}
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    message.role === 'user' 
+                      ? 'bg-primary-600 ml-2' 
+                      : 'bg-gray-600 dark:bg-gray-700 mr-2'
+                  }`}>
+                    {message.role === 'user' ? (
+                      <User className="h-4 w-4 text-white" />
+                    ) : (
+                      <Bot className="h-4 w-4 text-white" />
+                    )}
+                  </div>
+                  
+                  {/* Mensagem */}
+                  <div className={`rounded-2xl px-4 py-3 ${
                     message.role === 'user'
-                      ? 'text-blue-100'
-                      : 'text-gray-500 dark:text-gray-400'
-                  }`}
-                >
-                  {formatTime(message.created_at)}
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
+                  }`}>
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <p className={`text-xs mt-1 ${
+                      message.role === 'user' 
+                        ? 'text-primary-100' 
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                      {formatTime(message.created_at)}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           ))
         )}
         
-        {/* Indicador de carregamento quando IA está processando */}
+        {/* Indicador de digitação */}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 max-w-3/4">
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  IA está pensando...
-                </span>
+            <div className="flex items-start space-x-2">
+              <div className="w-8 h-8 bg-gray-600 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                <Bot className="h-4 w-4 text-white" />
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
               </div>
             </div>
           </div>
@@ -269,33 +328,46 @@ export default function ChatSidebar({ currentClientId }: ChatSidebarProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input de Mensagem */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex space-x-2">
-          <textarea
-            ref={textareaRef}
-            value={newMessageContent}
-            onChange={(e) => setNewMessageContent(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSendMessage()
-              }
-            }}
-            placeholder="Digite sua mensagem..."
-            className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[40px] max-h-32"
-            rows={1}
-            disabled={isLoading}
-          />
+      {/* Input de Nova Mensagem */}
+      <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="flex items-end space-x-3">
+          <div className="flex-1">
+            <textarea
+              ref={textareaRef}
+              value={newMessageContent}
+              onChange={(e) => setNewMessageContent(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Digite sua pergunta sobre marketing..."
+              disabled={isLoading}
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl 
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                       placeholder-gray-500 dark:placeholder-gray-400
+                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                       transition-colors duration-200 resize-none
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+              rows={1}
+              style={{ minHeight: '44px', maxHeight: '120px' }}
+            />
+          </div>
           <button
             onClick={handleSendMessage}
-            disabled={!newMessageContent.trim() || isLoading}
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            disabled={isLoading || !newMessageContent.trim()}
+            className="flex-shrink-0 w-11 h-11 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-600
+                     text-white rounded-xl flex items-center justify-center
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                     disabled:cursor-not-allowed transition-all duration-200"
+            title="Enviar mensagem (Enter)"
           >
-            <Send className="h-4 w-4" />
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Send className="h-5 w-5" />
+            )}
           </button>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+        
+        {/* Dica */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
           Pressione Enter para enviar, Shift+Enter para nova linha
         </p>
       </div>
